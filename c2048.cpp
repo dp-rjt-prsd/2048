@@ -182,8 +182,11 @@ int main() {
         else if (move == "s" || move == "S") moveDown();
         else {
             cout << "Invalid move! Use W, A, S, or D." << endl;
-            continue;
+            cout << "Press Enter to continue...";
+            cin.ignore();  // Ignore leftover newline from previous input
+            cin.get();     // Wait for Enter
         }
+
 
         if (!gridsEqual(backup, grid)) {
             addNewTile();
