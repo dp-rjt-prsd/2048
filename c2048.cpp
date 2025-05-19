@@ -2,23 +2,30 @@
 #include <cstdlib>
 #include <ctime>
 #include <string>
+#include <cstring> // for memcpy
 
 using namespace std;
 
-const int SIZE = 4; // Size of the grid
-int grid[SIZE][SIZE] = {0}; // Initialize the grid
+const int SIZE = 4;
+int grid[SIZE][SIZE] = {0};
+int score = 0;
 
 void initializeGame() {
     srand(time(0));
-    for (int i = 0; i < 2; ++i) {
+    int placed = 0;
+    while (placed < 2) {
         int x = rand() % SIZE;
         int y = rand() % SIZE;
-        grid[x][y] = (rand() % 2 + 1) * 2; // Place a 2 or 4
+        if (grid[x][y] == 0) {
+            grid[x][y] = (rand() % 2 + 1) * 2;
+            placed++;
+        }
     }
 }
 
 void displayGrid() {
-    system("cls"); // Clear the console
+    system("cls"); // Use "clear" on Unix/Linux/Mac
+    cout << "2048 Game\t\tScore: " << score << "\n\n";
     for (int i = 0; i < SIZE; ++i) {
         for (int j = 0; j < SIZE; ++j) {
             if (grid[i][j] == 0)
@@ -28,6 +35,7 @@ void displayGrid() {
         }
         cout << endl;
     }
+    cout << endl;
 }
 
 void addNewTile() {
@@ -36,22 +44,33 @@ void addNewTile() {
         x = rand() % SIZE;
         y = rand() % SIZE;
     } while (grid[x][y] != 0);
-    grid[x][y] = (rand() % 2 + 1) * 2; // Place a 2 or 4
+    grid[x][y] = (rand() % 2 + 1) * 2;
 }
 
 bool canMove() {
     for (int i = 0; i < SIZE; ++i) {
         for (int j = 0; j < SIZE; ++j) {
-            if (grid[i][j] == 0) return true; // Empty space exists
-            if (i < SIZE - 1 && grid[i][j] == grid[i + 1][j]) return true; // Vertical merge possible
-            if (j < SIZE - 1 && grid[i][j] == grid[i][j + 1]) return true; // Horizontal merge possible
+            if (grid[i][j] == 0)
+                return true;
+            if (i < SIZE - 1 && grid[i][j] == grid[i + 1][j])
+                return true;
+            if (j < SIZE - 1 && grid[i][j] == grid[i][j + 1])
+                return true;
         }
     }
-    return false; // No moves left
+    return false;
 }
 
+bool gridsEqual(int a[SIZE][SIZE], int b[SIZE][SIZE]) {
+    for (int i = 0; i < SIZE; ++i)
+        for (int j = 0; j < SIZE; ++j)
+            if (a[i][j] != b[i][j])
+                return false;
+    return true;
+}
 
 void moveLeft() {
+    bool merged[SIZE][SIZE] = {false};
     for (int i = 0; i < SIZE; ++i) {
         for (int j = 1; j < SIZE; ++j) {
             if (grid[i][j] != 0) {
@@ -61,9 +80,11 @@ void moveLeft() {
                     grid[i][k] = 0;
                     k--;
                 }
-                if (k > 0 && grid[i][k - 1] == grid[i][k]) {
+                if (k > 0 && grid[i][k - 1] == grid[i][k] && !merged[i][k - 1]) {
                     grid[i][k - 1] *= 2;
+                    score += grid[i][k - 1];
                     grid[i][k] = 0;
+                    merged[i][k - 1] = true;
                 }
             }
         }
@@ -71,6 +92,7 @@ void moveLeft() {
 }
 
 void moveRight() {
+    bool merged[SIZE][SIZE] = {false};
     for (int i = 0; i < SIZE; ++i) {
         for (int j = SIZE - 2; j >= 0; --j) {
             if (grid[i][j] != 0) {
@@ -80,9 +102,11 @@ void moveRight() {
                     grid[i][k] = 0;
                     k++;
                 }
-                if (k < SIZE - 1 && grid[i][k + 1] == grid[i][k]) {
+                if (k < SIZE - 1 && grid[i][k + 1] == grid[i][k] && !merged[i][k + 1]) {
                     grid[i][k + 1] *= 2;
+                    score += grid[i][k + 1];
                     grid[i][k] = 0;
+                    merged[i][k + 1] = true;
                 }
             }
         }
@@ -90,6 +114,7 @@ void moveRight() {
 }
 
 void moveUp() {
+    bool merged[SIZE][SIZE] = {false};
     for (int j = 0; j < SIZE; ++j) {
         for (int i = 1; i < SIZE; ++i) {
             if (grid[i][j] != 0) {
@@ -99,9 +124,11 @@ void moveUp() {
                     grid[k][j] = 0;
                     k--;
                 }
-                if (k > 0 && grid[k - 1][j] == grid[k][j]) {
+                if (k > 0 && grid[k - 1][j] == grid[k][j] && !merged[k - 1][j]) {
                     grid[k - 1][j] *= 2;
+                    score += grid[k - 1][j];
                     grid[k][j] = 0;
+                    merged[k - 1][j] = true;
                 }
             }
         }
@@ -109,6 +136,7 @@ void moveUp() {
 }
 
 void moveDown() {
+    bool merged[SIZE][SIZE] = {false};
     for (int j = 0; j < SIZE; ++j) {
         for (int i = SIZE - 2; i >= 0; --i) {
             if (grid[i][j] != 0) {
@@ -118,9 +146,11 @@ void moveDown() {
                     grid[k][j] = 0;
                     k++;
                 }
-                if (k < SIZE - 1 && grid[k + 1][j] == grid[k][j]) {
+                if (k < SIZE - 1 && grid[k + 1][j] == grid[k][j] && !merged[k + 1][j]) {
                     grid[k + 1][j] *= 2;
+                    score += grid[k + 1][j];
                     grid[k][j] = 0;
+                    merged[k + 1][j] = true;
                 }
             }
         }
@@ -129,24 +159,42 @@ void moveDown() {
 
 int main() {
     initializeGame();
-    displayGrid();
-    
-    while (canMove()) {
-        char move;
-        cout << "Use WASD to move (W=Up, A=Left, S=Down, D=Right): ";
-        cin >> move; // Get user input
 
-        switch (move) {
-            case 'a': moveLeft(); break;
-            case 'd': moveRight(); break;
-            case 'w': moveUp(); break;
-            case 's': moveDown(); break;
-            default: cout << "Invalid move! Use W, A, S, or D." << endl; continue;
-        }
-        addNewTile();
+    while (true) {
         displayGrid();
+
+        if (!canMove()) {
+            cout << "Game Over! Final Score: " << score << endl;
+            break;
+        }
+
+        cout << "Use WASD to move (W=Up, A=Left, S=Down, D=Right): ";
+        string move;
+        cin >> move;
+
+        int backup[SIZE][SIZE];
+        memcpy(backup, grid, sizeof(grid));
+
+        if (move == "a" || move == "A") moveLeft();
+        else if (move == "d" || move == "D") moveRight();
+        else if (move == "w" || move == "W") moveUp();
+        else if (move == "s" || move == "S") moveDown();
+        else {
+            cout << "Invalid move! Use W, A, S, or D." << endl;
+            continue;
+        }
+
+        if (!gridsEqual(backup, grid)) {
+            addNewTile();
+        } else {
+            // Grid didn't change, check again for game over
+            if (!canMove()) {
+                displayGrid();
+                cout << "Game Over! Final Score: " << score << endl;
+                break;
+            }
+        }
     }
 
-    cout << "Game Over!" << endl;
     return 0;
 }
