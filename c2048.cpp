@@ -1,3 +1,4 @@
+//All the changes in this version is external help taken from multiple sources 
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
